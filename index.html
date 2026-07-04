@@ -80,58 +80,62 @@
     line-height:1.5;
     margin-top:10px;
   }
-  .back-chevron{
-    width:34px;height:34px;
-    border-radius:50%;
-    border:1px solid var(--line);
-    background:var(--card);
-    color:var(--ink-soft);
-    display:inline-flex;align-items:center;justify-content:center;
-    font-size:16px;
-    margin-bottom:14px;
-    cursor:default;
-  }
-  /* ---------- Streak strip ---------- */
+  /* ---------- Progress ring + day streak strip ---------- */
   .streak-strip{
     background:var(--card);
     border-radius:var(--radius);
     box-shadow:var(--shadow);
-    padding:18px 24px;
+    padding:20px 24px;
     display:flex;
-    gap:36px;
+    align-items:center;
+    gap:28px;
     margin-bottom:20px;
   }
-  .streak-item{display:flex;align-items:center;gap:14px;}
-  .streak-item + .streak-item{padding-left:36px;border-left:1px solid var(--line);}
+  .progress-ring-wrap{
+    position:relative;
+    flex:0 0 auto;
+    width:92px;height:92px;
+  }
+  .progress-ring-wrap svg{display:block;}
+  .progress-ring-wrap circle{
+    transition:stroke-dashoffset .4s ease;
+  }
+  .progress-ring-label{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+  }
+  .progress-pct{font-family:'Fraunces',serif;font-size:19px;font-weight:600;color:var(--ink);}
+  .progress-caption{font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-top:1px;}
+
+  .day-streak-block{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    flex:1;
+    min-width:0;
+  }
+  .streak-item{display:flex;align-items:center;gap:12px;}
   .streak-badge{
-    width:40px;height:40px;
+    width:36px;height:36px;
     border-radius:50%;
     display:flex;align-items:center;justify-content:center;
-    font-size:19px;
+    font-size:16px;
     background:var(--amber-tint);
+    flex-shrink:0;
   }
-  .streak-num{font-family:'Fraunces',serif;font-size:24px;font-weight:600;color:var(--sage-deep);margin-right:6px;}
-  .streak-label{font-size:12px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;}
+  .streak-num{font-family:'Fraunces',serif;font-size:21px;font-weight:600;color:var(--sage-deep);margin-right:6px;}
+  .streak-label{font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;}
   .streak-text{display:flex;flex-direction:column;min-width:0;}
   .streak-text .row{display:flex;align-items:baseline;}
 
   @media (max-width:640px){
     .streak-strip{
-      flex-direction:column;
-      align-items:stretch;
-      gap:14px;
-      padding:16px 18px;
+      padding:18px 20px;
+      gap:20px;
     }
-    .streak-item + .streak-item{
-      padding-left:0;
-      border-left:none;
-      padding-top:14px;
-      border-top:1px solid var(--line);
-    }
-    .streak-item:last-child .streak-label{
-      white-space:normal;
-      line-height:1.4;
-    }
+    .progress-ring-wrap{width:76px;height:76px;}
+    .progress-ring-wrap svg{width:76px;height:76px;}
+    .progress-pct{font-size:16px;}
   }
   .week-nav{
     display:flex;
@@ -305,6 +309,42 @@
   .exercise .ex-note{font-size:12px;color:var(--ink-soft);}
   .rotation-note{font-size:12.5px;color:var(--ink-soft);margin-bottom:18px;}
 
+  /* ---------- Exercise pose illustrations ---------- */
+  .pose-pair{
+    display:flex;
+    gap:10px;
+    margin-top:12px;
+  }
+  .pose-panel{
+    flex:1;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:8px 6px 6px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .pose-svg{width:100%;max-width:110px;height:auto;display:block;}
+  .pose-caption{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9.5px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-top:4px;
+  }
+  .pose-torso{stroke:var(--ink);stroke-width:15;stroke-linecap:round;}
+  .pose-leg-upper{stroke:var(--ink);stroke-width:12;stroke-linecap:round;}
+  .pose-leg-lower{stroke:var(--ink);stroke-width:10;stroke-linecap:round;}
+  .pose-foot{stroke:var(--ink);stroke-width:8;stroke-linecap:round;}
+  .pose-arm-upper{stroke:var(--ink);stroke-width:10;stroke-linecap:round;}
+  .pose-arm-lower{stroke:var(--ink);stroke-width:9;stroke-linecap:round;}
+  .pose-joint{fill:var(--ink);}
+  .pose-head{fill:var(--ink);}
+  .pose-dumbbell-bar{stroke:var(--sage-deep);stroke-width:3;stroke-linecap:round;}
+  .pose-dumbbell-disc{fill:var(--amber);}
+
   /* ---------- Review ritual ---------- */
   .ritual-list{display:flex;flex-direction:column;gap:14px;}
   .ritual-step{
@@ -437,7 +477,6 @@
 <div class="wrap">
   <header>
     <div>
-      <div class="back-chevron">&larr;</div>
       <div class="brand-eyebrow">Thesis season / product & design</div>
       <h1>Weekly Habit Tracker</h1>
       <div class="subtitle">Six habits, tracked in seconds a day — strength, focus, sleep, and nutrition, built for a season with no time to spare.</div>
@@ -519,9 +558,18 @@ const HABITS = [
 
 const ROTATION = [
   {day:'Day A', exercises:[
-    {name:'Goblet squat (hold 1 dumbbell at chest)', meta:'3 x 10–12', note:'Slow on the way down'},
-    {name:'Bent-over row', meta:'3 x 10–12', note:'Flat back, squeeze shoulder blades'},
-    {name:'Standing shoulder press', meta:'3 x 8–10', note:'Stop if it strains your neck'}
+    {name:'Goblet squat (hold 1 dumbbell at chest)', meta:'3 x 10–12', note:'Slow on the way down',
+      start:{head:[80,28],shoulder:[80,54],elbow:[65,78],hand:[80,86],hip:[80,100],knee:[80,138],ankle:[80,168],toe:[100,168]},
+      move:{head:[78,72],shoulder:[78,96],elbow:[63,116],hand:[78,124],hip:[85,132],knee:[97,150],ankle:[80,168],toe:[100,168]}
+    },
+    {name:'Bent-over row', meta:'3 x 10–12', note:'Flat back, squeeze shoulder blades',
+      start:{head:[38,58],shoulder:[54,64],elbow:[50,94],hand:[47,120],hip:[96,80],knee:[100,130],ankle:[100,168],toe:[120,168]},
+      move:{head:[38,58],shoulder:[54,64],elbow:[74,80],hand:[85,74],hip:[96,80],knee:[100,130],ankle:[100,168],toe:[120,168]}
+    },
+    {name:'Standing shoulder press', meta:'3 x 8–10', note:'Stop if it strains your neck',
+      start:{head:[80,28],shoulder:[80,54],elbow:[99,64],hand:[99,42],hip:[80,100],knee:[80,138],ankle:[80,168],toe:[100,168]},
+      move:{head:[78,28],shoulder:[78,54],elbow:[100,30],hand:[102,8],hip:[78,100],knee:[78,138],ankle:[78,168],toe:[98,168]}
+    }
   ]},
   {day:'Day B', exercises:[
     {name:'Romanian deadlift (light hinge)', meta:'3 x 10–12', note:'Soft knees, hinge at hips'},
@@ -574,11 +622,13 @@ function syncSelectedDayToToday(){
 }
 syncSelectedDayToToday();
 
-function weekData(){
-  const key = isoDate(currentMonday);
+function getOrInitWeek(key){
   if(!store[key]) store[key] = {habits:{}, reflection:{}};
   HABITS.forEach(h => { if(!store[key].habits[h.id]) store[key].habits[h.id] = [null,null,null,null,null,null,null]; });
   return store[key];
+}
+function weekData(){
+  return getOrInitWeek(isoDate(currentMonday));
 }
 function save(){
   localStorage.setItem(STORE_KEY, JSON.stringify(store));
@@ -603,50 +653,90 @@ function renderHeader(){
   row.innerHTML += '<th>Total</th><th>Status</th>';
 }
 
-function weekScore(weekObj){
-  let score = 0;
-  HABITS.forEach(h => {
-    const vals = weekObj.habits[h.id] || [];
-    if(h.type === 'check'){
-      const total = vals.filter(v => v === 'on').length;
-      if(total >= h.target) score++;
-    } else {
-      const filled = vals.filter(v => v !== null);
-      const avg = filled.length ? filled.reduce((a,b)=>a+b,0)/filled.length : 0;
-      if(avg >= 3) score++;
-    }
-  });
-  return score;
+function dayIndexOf(dateObj){
+  const day = dateObj.getDay();
+  return day === 0 ? 6 : day - 1;
 }
 
-function computeStreaks(){
-  const keys = Object.keys(store).sort();
-  let longest = 0, run = 0, prevDate = null;
-  keys.forEach(k => {
-    const d = new Date(k + 'T00:00:00');
-    const ok = weekScore(store[k]) >= 4;
-    const consecutive = prevDate ? Math.round((d - prevDate) / 86400000) === 7 : true;
-    run = (ok && consecutive) ? run + 1 : (ok ? 1 : 0);
-    longest = Math.max(longest, run);
-    prevDate = d;
+function isHabitAchieved(h, v){
+  if(h.type === 'check') return v === 'on';
+  return v !== null && v >= 3;
+}
+
+function isDayAchieved(dateObj){
+  const key = isoDate(getMonday(dateObj));
+  const w = store[key];
+  if(!w) return false;
+  const idx = dayIndexOf(dateObj);
+  return HABITS.every(h => {
+    const arr = w.habits[h.id];
+    return arr ? isHabitAchieved(h, arr[idx]) : false;
   });
-  return {current: run, longest};
+}
+
+function getTodayProgressPct(){
+  const today = new Date();
+  const key = isoDate(getMonday(today));
+  const w = getOrInitWeek(key);
+  const idx = dayIndexOf(today);
+  let achieved = 0;
+  HABITS.forEach(h => {
+    if(isHabitAchieved(h, w.habits[h.id][idx])) achieved++;
+  });
+  return Math.round((achieved / HABITS.length) * 100);
+}
+
+function computeDayStreaks(){
+  const keys = Object.keys(store);
+  if(keys.length === 0) return {current: 0, longest: 0};
+  const earliest = new Date(Math.min(...keys.map(k => new Date(k + 'T00:00:00').getTime())));
+  const today = new Date(); today.setHours(0,0,0,0);
+  const results = [];
+  for(let d = new Date(earliest); d <= today; d.setDate(d.getDate() + 1)){
+    results.push(isDayAchieved(d));
+  }
+  let longest = 0, run = 0;
+  results.forEach(ok => { run = ok ? run + 1 : 0; longest = Math.max(longest, run); });
+  let current = 0;
+  for(let i = results.length - 1; i >= 0; i--){
+    if(results[i]) current++; else break;
+  }
+  return {current, longest};
 }
 
 function renderStreakStrip(){
-  const {current, longest} = computeStreaks();
+  const pct = getTodayProgressPct();
+  const {current, longest} = computeDayStreaks();
   const strip = document.getElementById('streakStrip');
+
+  const r = 42;
+  const circumference = 2 * Math.PI * r;
+  const offset = circumference * (1 - pct / 100);
+
   strip.innerHTML = `
-    <div class="streak-item">
-      <div class="streak-badge">🏅</div>
-      <div class="streak-text"><div class="row"><span class="streak-num">${longest}</span><span>wk</span></div><div class="streak-label">longest streak</div></div>
+    <div class="progress-ring-wrap">
+      <svg viewBox="0 0 100 100" width="92" height="92">
+        <circle cx="50" cy="50" r="${r}" fill="none" stroke="var(--line)" stroke-width="9"/>
+        <circle cx="50" cy="50" r="${r}" fill="none" stroke="var(--amber)" stroke-width="9"
+          stroke-linecap="round"
+          stroke-dasharray="${circumference}"
+          stroke-dashoffset="${offset}"
+          transform="rotate(-90 50 50)"/>
+      </svg>
+      <div class="progress-ring-label">
+        <span class="progress-pct">${pct}%</span>
+        <span class="progress-caption">today</span>
+      </div>
     </div>
-    <div class="streak-item">
-      <div class="streak-badge">🔥</div>
-      <div class="streak-text"><div class="row"><span class="streak-num">${current}</span><span>wk</span></div><div class="streak-label">current streak</div></div>
-    </div>
-    <div class="streak-item">
-      <div class="streak-text"><div class="streak-label" style="margin-top:2px;">A week counts when 4 of 6 habits hit target</div></div>
+    <div class="day-streak-block">
+      <div class="streak-item">
+        <div class="streak-badge">🔥</div>
+        <div class="streak-text"><div class="row"><span class="streak-num">${current}</span><span>${current === 1 ? 'day' : 'days'}</span></div><div class="streak-label">day streak</div></div>
+      </div>
+      <div class="streak-item">
+        <div class="streak-badge">🏅</div>
+        <div class="streak-text"><div class="row"><span class="streak-num">${longest}</span><span>${longest === 1 ? 'day' : 'days'}</span></div><div class="streak-label">longest streak</div></div>
+      </div>
     </div>
   `;
 }
@@ -834,6 +924,33 @@ function renderTrackerMobile(){
   });
 }
 
+function poseSvg(pose){
+  if(!pose) return '';
+  const {head, shoulder, elbow, hand, hip, knee, ankle, toe} = pose;
+  const line = (a,b,cls) => `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" class="${cls}"/>`;
+  const joint = (p, r) => `<circle cx="${p[0]}" cy="${p[1]}" r="${r}" class="pose-joint"/>`;
+  return `
+    <svg viewBox="0 0 160 176" class="pose-svg" xmlns="http://www.w3.org/2000/svg">
+      ${line(shoulder, hip, 'pose-torso')}
+      ${line(hip, knee, 'pose-leg-upper')}
+      ${line(knee, ankle, 'pose-leg-lower')}
+      ${line(ankle, toe, 'pose-foot')}
+      ${line(shoulder, elbow, 'pose-arm-upper')}
+      ${line(elbow, hand, 'pose-arm-lower')}
+      ${joint(shoulder, 8)}
+      ${joint(hip, 8)}
+      ${joint(knee, 6)}
+      ${joint(elbow, 5)}
+      <circle cx="${head[0]}" cy="${head[1]}" r="13" class="pose-head"/>
+      <g class="pose-dumbbell" transform="translate(${hand[0]},${hand[1]})">
+        <line x1="-9" y1="0" x2="9" y2="0" class="pose-dumbbell-bar"/>
+        <circle cx="-9" cy="0" r="5" class="pose-dumbbell-disc"/>
+        <circle cx="9" cy="0" r="5" class="pose-dumbbell-disc"/>
+      </g>
+    </svg>
+  `;
+}
+
 function renderRotation(){
   const grid = document.getElementById('rotationGrid');
   grid.innerHTML = ROTATION.map(d => `
@@ -845,6 +962,18 @@ function renderRotation(){
           <div class="ex-name">${e.name}</div>
           <div class="ex-meta">${e.meta}</div>
           <div class="ex-note">${e.note}</div>
+          ${e.start ? `
+            <div class="pose-pair">
+              <div class="pose-panel">
+                ${poseSvg(e.start)}
+                <div class="pose-caption">Start</div>
+              </div>
+              <div class="pose-panel">
+                ${poseSvg(e.move)}
+                <div class="pose-caption">Movement</div>
+              </div>
+            </div>
+          ` : ''}
         </div>
       `).join('')}
     </div>
