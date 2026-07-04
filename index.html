@@ -308,9 +308,86 @@
     h1{font-size:26px;}
     .dot{width:22px;height:22px;font-size:10px;}
   }
+
+  /* ---------- Auth overlay ---------- */
+  #authOverlay{
+    position:fixed;inset:0;
+    background:var(--paper);
+    display:flex;align-items:center;justify-content:center;
+    z-index:1000;
+    padding:20px;
+  }
+  .auth-card{
+    background:var(--card);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:36px 32px;
+    width:100%;max-width:380px;
+  }
+  .auth-card h1{font-size:28px;margin-bottom:6px;}
+  .auth-card .sub{font-size:13px;color:var(--ink-soft);margin-bottom:22px;line-height:1.5;}
+  .auth-card input{
+    width:100%;
+    padding:11px 13px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    margin-bottom:12px;
+    background:var(--paper);
+  }
+  .auth-card input:focus{outline:2px solid var(--amber);outline-offset:1px;}
+  .auth-card button.primary{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    background:var(--sage-deep);
+    color:#fff;
+    font-family:'Inter',sans-serif;
+    font-size:14.5px;
+    font-weight:600;
+    cursor:pointer;
+    margin-top:6px;
+  }
+  .auth-card button.primary:hover{opacity:.9;}
+  .auth-card button.primary:disabled{opacity:.5;cursor:not-allowed;}
+  .auth-toggle{
+    text-align:center;font-size:13px;color:var(--ink-soft);margin-top:16px;
+  }
+  .auth-toggle a{color:var(--sage);cursor:pointer;text-decoration:underline;}
+  .auth-error{
+    background:var(--amber-tint);color:#8A4A12;
+    font-size:12.5px;padding:9px 12px;border-radius:8px;margin-bottom:12px;display:none;
+  }
+  #appRoot{display:none;}
+  .user-bar{
+    display:flex;align-items:center;gap:10px;
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-soft);
+  }
+  .user-bar button{
+    border:1px solid var(--line);background:var(--card);color:var(--ink-soft);
+    border-radius:999px;padding:5px 12px;font-size:11.5px;cursor:pointer;font-family:'Inter',sans-serif;
+  }
+  .user-bar button:hover{border-color:var(--amber);color:var(--amber);}
 </style>
 </head>
 <body>
+
+<!-- AUTH OVERLAY -->
+<div id="authOverlay">
+  <div class="auth-card">
+    <h1>Weekly Habit Tracker</h1>
+    <div class="sub" id="authSub">Sign in to sync your habits across devices.</div>
+    <div class="auth-error" id="authError"></div>
+    <input type="email" id="authEmail" placeholder="Email" autocomplete="email">
+    <input type="password" id="authPassword" placeholder="Password" autocomplete="current-password">
+    <button class="primary" id="authSubmit">Sign in</button>
+    <div class="auth-toggle" id="authToggle">New here? <a id="authSwitch">Create an account</a></div>
+  </div>
+</div>
+
+<div id="appRoot">
 <div class="wrap">
   <header>
     <div>
@@ -325,6 +402,11 @@
       <button id="nextWeek" aria-label="Next week">&rarr;</button>
     </div>
   </header>
+
+  <div class="user-bar" style="justify-content:flex-end;margin:-14px 0 18px;">
+    <span id="userEmail"></span>
+    <button id="logoutBtn">Sign out</button>
+  </div>
 
   <div class="tabs">
     <button class="tab-btn active" data-tab="tracker">Tracker</button>
@@ -378,11 +460,124 @@
 </div>
 
 <footer>
-  <span>Data is stored locally in this browser — nothing leaves your device.</span>
+  <span>Your data is synced securely to your account — only you can see it.</span>
   <span class="save-note" id="saveNote"></span>
 </footer>
+</div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import {
+  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  onAuthStateChanged, signOut
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBCv5eqW4k5Wo5DUlwG-jolQFS6T4EFX2s",
+  authDomain: "habit-tracker-a2e74.firebaseapp.com",
+  projectId: "habit-tracker-a2e74",
+  storageBucket: "habit-tracker-a2e74.firebasestorage.app",
+  messagingSenderId: "369766064403",
+  appId: "1:369766064403:web:ebfcabe49ffa200f36fae6"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUser = null;
+let isSignupMode = false;
+
+const authOverlay = document.getElementById('authOverlay');
+const appRoot = document.getElementById('appRoot');
+const authEmail = document.getElementById('authEmail');
+const authPassword = document.getElementById('authPassword');
+const authError = document.getElementById('authError');
+const authSubmit = document.getElementById('authSubmit');
+const authSwitch = document.getElementById('authSwitch');
+const authSub = document.getElementById('authSub');
+const authToggle = document.getElementById('authToggle');
+
+function showAuthError(msg){
+  authError.textContent = msg;
+  authError.style.display = 'block';
+}
+function clearAuthError(){
+  authError.style.display = 'none';
+}
+
+authSwitch.addEventListener('click', () => {
+  isSignupMode = !isSignupMode;
+  clearAuthError();
+  if(isSignupMode){
+    authSubmit.textContent = 'Create account';
+    authSub.textContent = 'Create an account to start syncing your habits.';
+    authToggle.innerHTML = 'Already have an account? <a id="authSwitch2">Sign in</a>';
+    document.getElementById('authSwitch2').addEventListener('click', () => authSwitch.click());
+  } else {
+    authSubmit.textContent = 'Sign in';
+    authSub.textContent = 'Sign in to sync your habits across devices.';
+    authToggle.innerHTML = 'New here? <a id="authSwitch2">Create an account</a>';
+    document.getElementById('authSwitch2').addEventListener('click', () => authSwitch.click());
+  }
+});
+
+authSubmit.addEventListener('click', async () => {
+  clearAuthError();
+  const email = authEmail.value.trim();
+  const password = authPassword.value;
+  if(!email || !password){ showAuthError('Enter both an email and a password.'); return; }
+  if(password.length < 6){ showAuthError('Password must be at least 6 characters.'); return; }
+  authSubmit.disabled = true;
+  authSubmit.textContent = 'Please wait…';
+  try{
+    if(isSignupMode){
+      await createUserWithEmailAndPassword(auth, email, password);
+    } else {
+      await signInWithEmailAndPassword(auth, email, password);
+    }
+  } catch(err){
+    showAuthError(friendlyAuthError(err.code));
+    authSubmit.disabled = false;
+    authSubmit.textContent = isSignupMode ? 'Create account' : 'Sign in';
+  }
+});
+
+function friendlyAuthError(code){
+  switch(code){
+    case 'auth/email-already-in-use': return 'That email already has an account — try signing in instead.';
+    case 'auth/invalid-email': return 'That email address looks invalid.';
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential': return 'Incorrect email or password.';
+    case 'auth/user-not-found': return 'No account found with that email.';
+    case 'auth/weak-password': return 'Password must be at least 6 characters.';
+    default: return 'Something went wrong. Please try again.';
+  }
+}
+
+document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+
+onAuthStateChanged(auth, async (user) => {
+  if(user){
+    currentUser = user;
+    authOverlay.style.display = 'none';
+    appRoot.style.display = 'block';
+    document.getElementById('userEmail').textContent = user.email;
+    await loadStoreFromCloud();
+    updateWeek();
+    renderRotation();
+    renderRitual();
+  } else {
+    currentUser = null;
+    authOverlay.style.display = 'flex';
+    appRoot.style.display = 'none';
+    authSubmit.disabled = false;
+  }
+});
+
 const HABITS = [
   {id:'strength', name:'Strength training (dumbbells, light rotation)', why:'Preserves and builds muscle safely at your current weight and load.', target:4, type:'check'},
   {id:'deepwork', name:'1 deep-work block (60–90 min)', why:'Thesis progress needs protected focus time, not just available time.', target:5, type:'check'},
@@ -417,8 +612,34 @@ const RITUAL = [
   {title:"Set next week's focus", time:'1 min', desc:'Write down the single habit you\'ll protect hardest next week, given what\'s coming up.'}
 ];
 
-const STORE_KEY = 'weeklyHabitTracker_v1';
-let store = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+let store = {};
+
+async function loadStoreFromCloud(){
+  if(!currentUser) return;
+  const ref = doc(db, 'habitTrackers', currentUser.uid);
+  const snap = await getDoc(ref);
+  store = snap.exists() ? (snap.data().store || {}) : {};
+}
+
+let saveTimer = null;
+function save(){
+  if(!currentUser) return;
+  const note = document.getElementById('saveNote');
+  note.textContent = 'Saving…';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try{
+      const ref = doc(db, 'habitTrackers', currentUser.uid);
+      await setDoc(ref, { store });
+      note.textContent = 'Saved ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    } catch(err){
+      note.textContent = 'Save failed — check connection';
+    }
+    clearTimeout(save._t);
+    save._t = setTimeout(()=> { note.textContent=''; }, 3000);
+  }, 500);
+}
+
 
 function getMonday(d){
   const date = new Date(d);
@@ -443,14 +664,6 @@ function weekData(){
   HABITS.forEach(h => { if(!store[key].habits[h.id]) store[key].habits[h.id] = [null,null,null,null,null,null,null]; });
   return store[key];
 }
-function save(){
-  localStorage.setItem(STORE_KEY, JSON.stringify(store));
-  const note = document.getElementById('saveNote');
-  note.textContent = 'Saved ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  clearTimeout(save._t);
-  save._t = setTimeout(()=> note.textContent='', 2500);
-}
-
 function renderHeader(){
   const row = document.getElementById('headRow');
   row.innerHTML = '<th class="habit-head">Habit</th><th>Target</th>';
@@ -646,10 +859,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
   });
 });
-
-updateWeek();
-renderRotation();
-renderRitual();
 </script>
 </body>
 </html>
