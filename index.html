@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Habit Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FCFBF7;
+    --ink:#1C1B18;
+    --ink-soft:#8C8880;
+    --sage:#B9560C;
+    --sage-deep:#1C1B18;
+    --sage-tint:#FBEFDA;
+    --amber:#E85D2C;
+    --amber-tint:#FDE7C4;
+    --flame-light:#FDC55A;
+    --flame-mid:#F2A93B;
+    --pill-bg:#F1EEE7;
+    --line:#EAE5D9;
+    --card:#FFFFFF;
+    --radius:18px;
+    --shadow: 0 1px 2px rgba(28,27,24,0.04), 0 8px 24px rgba(28,27,24,0.06);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    padding:0 0 80px 0;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:36px 28px 0;}
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:20px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:22px;
+    margin-bottom:26px;
+  }
+  .brand-eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--sage);
+    margin-bottom:6px;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:46px;
+    margin:0;
+    line-height:1.02;
+    color:var(--sage-deep);
+    letter-spacing:-0.01em;
+  }
+  .subtitle{
+    font-size:14.5px;
+    color:var(--ink-soft);
+    max-width:520px;
+    line-height:1.5;
+    margin-top:10px;
+  }
+  .back-chevron{
+    width:34px;height:34px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:var(--card);
+    color:var(--ink-soft);
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:16px;
+    margin-bottom:14px;
+    cursor:default;
+  }
+  /* ---------- Streak strip ---------- */
+  .streak-strip{
+    background:var(--card);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:18px 24px;
+    display:flex;
+    gap:36px;
+    margin-bottom:20px;
+  }
+  .streak-item{display:flex;align-items:center;gap:14px;}
+  .streak-item + .streak-item{padding-left:36px;border-left:1px solid var(--line);}
+  .streak-badge{
+    width:40px;height:40px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:19px;
+    background:var(--amber-tint);
+  }
+  .streak-num{font-family:'Fraunces',serif;font-size:24px;font-weight:600;color:var(--sage-deep);margin-right:6px;}
+  .streak-label{font-size:12px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;}
+  .streak-text{display:flex;flex-direction:column;}
+  .streak-text .row{display:flex;align-items:baseline;}
+  .week-nav{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .week-nav button{
+    width:32px;height:32px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:var(--card);
+    color:var(--sage-deep);
+    cursor:pointer;
+    font-size:15px;
+    display:flex;align-items:center;justify-content:center;
+    transition:all .15s ease;
+  }
+  .week-nav button:hover{background:var(--sage-tint);border-color:var(--sage);}
+  .week-range{min-width:150px;text-align:center;font-weight:500;color:var(--ink);}
+
+  /* ---------- Tabs ---------- */
+  .tabs{display:flex;gap:6px;margin-bottom:24px;}
+  .tab-btn{
+    font-family:'Inter',sans-serif;
+    font-size:14.5px;
+    font-weight:500;
+    padding:11px 20px;
+    border-radius:999px;
+    border:none;
+    background:var(--pill-bg);
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .tab-btn.active{background:var(--sage-deep);color:#fff;}
+  .tab-btn:not(.active):hover{background:var(--line);color:var(--ink);}
+  .panel{display:none;}
+  .panel.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  /* ---------- Tracker table ---------- */
+  .tracker-card{
+    background:var(--card);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:6px;
+    overflow-x:auto;
+  }
+  table{border-collapse:collapse;width:100%;min-width:820px;}
+  thead th{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    text-align:center;
+    padding:14px 6px 10px;
+    border-bottom:1px solid var(--line);
+  }
+  thead th.habit-head{text-align:left;padding-left:18px;}
+  tbody td{
+    padding:12px 6px;
+    text-align:center;
+    border-bottom:1px solid var(--line);
+    vertical-align:middle;
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  .habit-cell{text-align:left;padding-left:18px;max-width:230px;}
+  .habit-name{font-weight:600;font-size:13.5px;color:var(--ink);}
+  .habit-why{font-size:11.5px;color:var(--ink-soft);margin-top:3px;line-height:1.35;}
+  .target-cell{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);white-space:nowrap;}
+
+  .dot{
+    width:26px;height:26px;
+    border-radius:50%;
+    border:1.5px solid var(--line);
+    background:#fff;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;justify-content:center;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    font-weight:500;
+    color:transparent;
+    transition:all .15s ease;
+  }
+  .dot:hover{border-color:var(--sage);}
+  .dot.check-on{background:var(--amber);border-color:var(--amber);color:#fff;}
+  .dot.r1{background:#F1E4D0;border-color:#E3CBA0;color:#8a6a2f;}
+  .dot.r2{background:#EAD9B4;border-color:#D9B77E;color:#7a5a20;}
+  .dot.r3{background:var(--amber-tint);border-color:var(--amber);color:#7d5623;}
+  .dot.r4{background:#E3B06B;border-color:var(--amber);color:#4a3212;}
+  .dot.r5{background:var(--amber);border-color:#9c6a24;color:#fff;}
+
+  .total-cell{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--sage-deep);}
+  .status-pill{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    padding:4px 10px;
+    border-radius:999px;
+    display:inline-block;
+    white-space:nowrap;
+  }
+  .status-pill.on{background:var(--amber-tint);color:#8A4A12;}
+  .status-pill.watch{background:#F3EDE0;color:#8a6a2f;}
+  .status-pill.none{background:#F2F1EC;color:var(--ink-soft);}
+
+  .day-head{display:flex;flex-direction:column;align-items:center;gap:4px;}
+  .day-head .dname{font-size:10px;}
+  .day-head .dnum{
+    width:22px;height:22px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Inter',sans-serif;font-size:11px;font-weight:600;color:var(--ink-soft);
+  }
+  .day-head.is-today .dnum{background:var(--amber);color:#fff;}
+
+  /* ---------- Reflection ---------- */
+  .reflection{
+    margin-top:22px;
+    background:var(--card);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:24px 26px;
+  }
+  .reflection h2{
+    font-family:'Fraunces',serif;
+    font-size:19px;
+    margin:0 0 4px;
+    color:var(--sage-deep);
+  }
+  .reflection .sub{font-size:12.5px;color:var(--ink-soft);margin-bottom:16px;}
+  .q-block{margin-bottom:16px;}
+  .q-block label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;}
+  .q-block textarea{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:10px 12px;
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    resize:vertical;
+    min-height:44px;
+    background:var(--paper);
+  }
+  .q-block textarea:focus{outline:2px solid var(--sage);outline-offset:1px;}
+
+  /* ---------- Strength tab ---------- */
+  .rotation-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;}
+  .day-card{
+    background:var(--card);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:20px 22px;
+  }
+  .day-card .day-eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--amber);
+    margin-bottom:8px;
+  }
+  .day-card h3{font-family:'Fraunces',serif;font-size:19px;margin:0 0 12px;color:var(--sage-deep);}
+  .exercise{border-top:1px solid var(--line);padding:10px 0;}
+  .exercise:first-of-type{border-top:none;}
+  .exercise .ex-name{font-weight:600;font-size:13.5px;}
+  .exercise .ex-meta{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--sage);margin:3px 0;}
+  .exercise .ex-note{font-size:12px;color:var(--ink-soft);}
+  .rotation-note{font-size:12.5px;color:var(--ink-soft);margin-bottom:18px;}
+
+  /* ---------- Review ritual ---------- */
+  .ritual-list{display:flex;flex-direction:column;gap:14px;}
+  .ritual-step{
+    background:var(--card);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:18px 22px;
+    display:flex;
+    gap:18px;
+    align-items:flex-start;
+  }
+  .ritual-step .num{
+    font-family:'Fraunces',serif;
+    font-size:26px;
+    color:var(--amber);
+    min-width:34px;
+  }
+  .ritual-step h3{font-size:15px;margin:0 0 4px;font-weight:600;}
+  .ritual-step p{font-size:13px;color:var(--ink-soft);margin:0;line-height:1.5;}
+
+  footer{
+    max-width:1080px;margin:34px auto 0;padding:0 28px;
+    font-size:11.5px;color:var(--ink-soft);
+    font-family:'IBM Plex Mono',monospace;
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  }
+  .save-note{color:var(--sage);}
+
+  @media (max-width:640px){
+    h1{font-size:26px;}
+    .dot{width:22px;height:22px;font-size:10px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="back-chevron">&larr;</div>
+      <div class="brand-eyebrow">Thesis season / product & design</div>
+      <h1>Weekly Habit Tracker</h1>
+      <div class="subtitle">Six habits, tracked in seconds a day — strength, focus, sleep, and nutrition, built for a season with no time to spare.</div>
+    </div>
+    <div class="week-nav">
+      <button id="prevWeek" aria-label="Previous week">&larr;</button>
+      <span class="week-range" id="weekRange">–</span>
+      <button id="nextWeek" aria-label="Next week">&rarr;</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tracker">Tracker</button>
+    <button class="tab-btn" data-tab="rotation">Strength Rotation</button>
+    <button class="tab-btn" data-tab="ritual">Review Ritual</button>
+  </div>
+
+  <!-- TRACKER PANEL -->
+  <div class="panel active" id="panel-tracker">
+    <div class="streak-strip" id="streakStrip"></div>
+    <div class="tracker-card">
+      <table>
+        <thead>
+          <tr id="headRow">
+            <th class="habit-head">Habit</th>
+            <th>Target</th>
+          </tr>
+        </thead>
+        <tbody id="trackerBody"></tbody>
+      </table>
+    </div>
+
+    <div class="reflection">
+      <h2>Weekly Reflection</h2>
+      <div class="sub">Answer one or two — not all three. Saved automatically per week.</div>
+      <div class="q-block">
+        <label>Which habit gave me the most energy back this week?</label>
+        <textarea data-q="q1" rows="2"></textarea>
+      </div>
+      <div class="q-block">
+        <label>Where did I overcommit, and what's one thing I can drop or shrink next week?</label>
+        <textarea data-q="q2" rows="2"></textarea>
+      </div>
+      <div class="q-block">
+        <label>Did strength training feel sustainable, or did I need to scale it down?</label>
+        <textarea data-q="q3" rows="2"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROTATION PANEL -->
+  <div class="panel" id="panel-rotation">
+    <div class="rotation-note">Aim for 4 sessions/week if the week allows — 3 is a solid minimum. Rest 60–90 sec between sets. All exercises use one pair of 4kg dumbbells.</div>
+    <div class="rotation-grid" id="rotationGrid"></div>
+  </div>
+
+  <!-- RITUAL PANEL -->
+  <div class="panel" id="panel-ritual">
+    <div class="ritual-list" id="ritualList"></div>
+  </div>
+</div>
+
+<footer>
+  <span>Data is stored locally in this browser — nothing leaves your device.</span>
+  <span class="save-note" id="saveNote"></span>
+</footer>
+
+<script>
+const HABITS = [
+  {id:'strength', name:'Strength training (dumbbells, light rotation)', why:'Preserves and builds muscle safely at your current weight and load.', target:4, type:'check'},
+  {id:'deepwork', name:'1 deep-work block (60–90 min)', why:'Thesis progress needs protected focus time, not just available time.', target:5, type:'check'},
+  {id:'sleep', name:'Lights out before 23:00', why:'Recovery for your body and brain both depend on consistent sleep.', target:7, type:'check'},
+  {id:'phone', name:'No phone in bed', why:'Protects the sleep habit above from quietly eroding.', target:7, type:'check'},
+  {id:'protein', name:'2–3 protein-rich meals', why:'Supports muscle recovery and steady energy through long days.', target:7, type:'rating'},
+  {id:'energy', name:'Energy / stress check-in', why:'A quick pulse-check catches overload before it becomes a crisis.', target:7, type:'rating'}
+];
+
+const ROTATION = [
+  {day:'Day A', exercises:[
+    {name:'Goblet squat (hold 1 dumbbell at chest)', meta:'3 x 10–12', note:'Slow on the way down'},
+    {name:'Bent-over row', meta:'3 x 10–12', note:'Flat back, squeeze shoulder blades'},
+    {name:'Standing shoulder press', meta:'3 x 8–10', note:'Stop if it strains your neck'}
+  ]},
+  {day:'Day B', exercises:[
+    {name:'Romanian deadlift (light hinge)', meta:'3 x 10–12', note:'Soft knees, hinge at hips'},
+    {name:'Bicep curl', meta:'3 x 10–12', note:'Control the lowering phase'},
+    {name:'Overhead tricep extension', meta:'3 x 10–12', note:'Keep elbows close to head'}
+  ]},
+  {day:'Day C', exercises:[
+    {name:'Reverse lunge (alternating legs)', meta:'3 x 8–10 each leg', note:'Hold dumbbells at sides'},
+    {name:'Lateral raise', meta:'3 x 10–12', note:'Light and slow, no swinging'},
+    {name:'Plank (bodyweight)', meta:'3 x 20–30 sec', note:'Optional 4th session filler'}
+  ]}
+];
+
+const RITUAL = [
+  {title:'Look at the totals', time:'2 min', desc:'Scan the status column on the tracker. Do not judge yet — just notice patterns.'},
+  {title:'Answer 1–2 reflection questions', time:'3 min', desc:'Use the reflection block. Short answers are fine.'},
+  {title:'Pick ONE adjustment', time:'2 min', desc:'Only one habit gets tweaked next week: lower its target, change its time of day, or swap it out. Don\'t overhaul everything at once.'},
+  {title:"Set next week's focus", time:'1 min', desc:'Write down the single habit you\'ll protect hardest next week, given what\'s coming up.'}
+];
+
+const STORE_KEY = 'weeklyHabitTracker_v1';
+let store = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+
+function getMonday(d){
+  const date = new Date(d);
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+  date.setDate(diff);
+  date.setHours(0,0,0,0);
+  return date;
+}
+function isoDate(d){ return d.toISOString().slice(0,10); }
+function fmtRange(monday){
+  const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
+  const opts = {month:'short', day:'numeric'};
+  return monday.toLocaleDateString('en-US',opts) + ' – ' + sunday.toLocaleDateString('en-US',opts);
+}
+
+let currentMonday = getMonday(new Date());
+
+function weekData(){
+  const key = isoDate(currentMonday);
+  if(!store[key]) store[key] = {habits:{}, reflection:{}};
+  HABITS.forEach(h => { if(!store[key].habits[h.id]) store[key].habits[h.id] = [null,null,null,null,null,null,null]; });
+  return store[key];
+}
+function save(){
+  localStorage.setItem(STORE_KEY, JSON.stringify(store));
+  const note = document.getElementById('saveNote');
+  note.textContent = 'Saved ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  clearTimeout(save._t);
+  save._t = setTimeout(()=> note.textContent='', 2500);
+}
+
+function renderHeader(){
+  const row = document.getElementById('headRow');
+  row.innerHTML = '<th class="habit-head">Habit</th><th>Target</th>';
+  const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const today = new Date(); today.setHours(0,0,0,0);
+  for(let i=0;i<7;i++){
+    const d = new Date(currentMonday); d.setDate(currentMonday.getDate()+i);
+    const isToday = d.getTime() === today.getTime();
+    const th = document.createElement('th');
+    th.innerHTML = `<div class="day-head ${isToday?'is-today':''}"><span class="dname">${dayNames[i]}</span><span class="dnum">${d.getDate()}</span></div>`;
+    row.appendChild(th);
+  }
+  row.innerHTML += '<th>Total</th><th>Status</th>';
+}
+
+function weekScore(weekObj){
+  let score = 0;
+  HABITS.forEach(h => {
+    const vals = weekObj.habits[h.id] || [];
+    if(h.type === 'check'){
+      const total = vals.filter(v => v === 'on').length;
+      if(total >= h.target) score++;
+    } else {
+      const filled = vals.filter(v => v !== null);
+      const avg = filled.length ? filled.reduce((a,b)=>a+b,0)/filled.length : 0;
+      if(avg >= 3) score++;
+    }
+  });
+  return score;
+}
+
+function computeStreaks(){
+  const keys = Object.keys(store).sort();
+  let longest = 0, run = 0, prevDate = null;
+  keys.forEach(k => {
+    const d = new Date(k + 'T00:00:00');
+    const ok = weekScore(store[k]) >= 4;
+    const consecutive = prevDate ? Math.round((d - prevDate) / 86400000) === 7 : true;
+    run = (ok && consecutive) ? run + 1 : (ok ? 1 : 0);
+    longest = Math.max(longest, run);
+    prevDate = d;
+  });
+  return {current: run, longest};
+}
+
+function renderStreakStrip(){
+  const {current, longest} = computeStreaks();
+  const strip = document.getElementById('streakStrip');
+  strip.innerHTML = `
+    <div class="streak-item">
+      <div class="streak-badge">🏅</div>
+      <div class="streak-text"><div class="row"><span class="streak-num">${longest}</span><span>wk</span></div><div class="streak-label">longest streak</div></div>
+    </div>
+    <div class="streak-item">
+      <div class="streak-badge">🔥</div>
+      <div class="streak-text"><div class="row"><span class="streak-num">${current}</span><span>wk</span></div><div class="streak-label">current streak</div></div>
+    </div>
+    <div class="streak-item">
+      <div class="streak-text"><div class="streak-label" style="margin-top:2px;">A week counts when 4 of 6 habits hit target</div></div>
+    </div>
+  `;
+}
+
+function renderTracker(){
+  const data = weekData();
+  const body = document.getElementById('trackerBody');
+  body.innerHTML = '';
+  HABITS.forEach(h => {
+    const row = document.createElement('tr');
+    const vals = data.habits[h.id];
+
+    let total, statusHtml;
+    if(h.type === 'check'){
+      total = vals.filter(v => v === 'on').length;
+      const pct = total >= h.target;
+      statusHtml = total === 0
+        ? '<span class="status-pill none">No data</span>'
+        : pct ? '<span class="status-pill on">On track</span>' : '<span class="status-pill watch">Keep going</span>';
+    } else {
+      const filled = vals.filter(v => v !== null);
+      const avg = filled.length ? (filled.reduce((a,b)=>a+b,0)/filled.length) : null;
+      total = avg !== null ? avg.toFixed(1) : '–';
+      statusHtml = avg === null
+        ? '<span class="status-pill none">No data</span>'
+        : avg >= 3 ? '<span class="status-pill on">On track</span>' : '<span class="status-pill watch">Watch this</span>';
+    }
+
+    const dayCells = vals.map((v, i) => {
+      if(h.type === 'check'){
+        return `<td><span class="dot ${v==='on'?'check-on':''}" data-habit="${h.id}" data-day="${i}" data-type="check">${v==='on'?'✓':''}</span></td>`;
+      } else {
+        const cls = v ? `r${v}` : '';
+        return `<td><span class="dot ${cls}" data-habit="${h.id}" data-day="${i}" data-type="rating" data-val="${v||''}">${v||''}</span></td>`;
+      }
+    }).join('');
+
+    row.innerHTML = `
+      <td class="habit-cell">
+        <div class="habit-name">${h.name}</div>
+        <div class="habit-why">${h.why}</div>
+      </td>
+      <td class="target-cell">${h.target}x/week</td>
+      ${dayCells}
+      <td class="total-cell">${total}</td>
+      <td>${statusHtml}</td>
+    `;
+    body.appendChild(row);
+  });
+
+  body.querySelectorAll('.dot').forEach(dot => {
+    dot.addEventListener('click', () => {
+      const habitId = dot.dataset.habit;
+      const day = +dot.dataset.day;
+      const type = dot.dataset.type;
+      const d = weekData();
+      if(type === 'check'){
+        d.habits[habitId][day] = d.habits[habitId][day] === 'on' ? null : 'on';
+      } else {
+        const cur = d.habits[habitId][day] || 0;
+        d.habits[habitId][day] = cur >= 5 ? null : cur + 1;
+      }
+      save();
+      renderTracker();
+      renderStreakStrip();
+    });
+  });
+
+  // reflection
+  const refl = data.reflection;
+  document.querySelectorAll('.q-block textarea').forEach(ta => {
+    ta.value = refl[ta.dataset.q] || '';
+  });
+}
+
+function renderRotation(){
+  const grid = document.getElementById('rotationGrid');
+  grid.innerHTML = ROTATION.map(d => `
+    <div class="day-card">
+      <div class="day-eyebrow">${d.day}</div>
+      <h3>${d.exercises.length} moves · ~20–25 min</h3>
+      ${d.exercises.map(e => `
+        <div class="exercise">
+          <div class="ex-name">${e.name}</div>
+          <div class="ex-meta">${e.meta}</div>
+          <div class="ex-note">${e.note}</div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function renderRitual(){
+  const list = document.getElementById('ritualList');
+  list.innerHTML = RITUAL.map((r,i) => `
+    <div class="ritual-step">
+      <div class="num">${String(i+1).padStart(2,'0')}</div>
+      <div>
+        <h3>${r.title} <span style="color:var(--ink-soft);font-weight:400;">— ${r.time}</span></h3>
+        <p>${r.desc}</p>
+      </div>
+    </div>
+  `).join('');
+}
+
+document.querySelectorAll('.q-block textarea').forEach(ta => {
+  ta.addEventListener('input', () => {
+    const data = weekData();
+    data.reflection[ta.dataset.q] = ta.value;
+    save();
+  });
+});
+
+document.getElementById('prevWeek').addEventListener('click', () => {
+  currentMonday.setDate(currentMonday.getDate() - 7);
+  updateWeek();
+});
+document.getElementById('nextWeek').addEventListener('click', () => {
+  currentMonday.setDate(currentMonday.getDate() + 7);
+  updateWeek();
+});
+function updateWeek(){
+  document.getElementById('weekRange').textContent = fmtRange(currentMonday);
+  renderHeader();
+  renderTracker();
+  renderStreakStrip();
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+updateWeek();
+renderRotation();
+renderRitual();
+</script>
+</body>
+</html>
