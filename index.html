@@ -345,6 +345,22 @@
   .pose-dumbbell-bar{stroke:var(--sage-deep);stroke-width:3;stroke-linecap:round;}
   .pose-dumbbell-disc{fill:var(--amber);}
 
+  .pose-hl{stroke:var(--amber) !important;}
+  .pose-motion-arrow{stroke:var(--amber);stroke-width:2.5;stroke-dasharray:4 3;fill:none;}
+  .pose-motion-arrowhead{fill:var(--amber);}
+  .pose-guideline{stroke:var(--amber);stroke-width:1.5;stroke-dasharray:3 3;}
+  .pose-back-leg{stroke:var(--ink-soft);stroke-width:9;stroke-linecap:round;opacity:.65;}
+  .pose-back-leg-foot{stroke:var(--ink-soft);stroke-width:7;stroke-linecap:round;opacity:.65;}
+  .pose-cue{
+    font-size:12px;
+    color:var(--ink-soft);
+    background:var(--sage-tint);
+    border-radius:8px;
+    padding:8px 10px;
+    margin-top:10px;
+    line-height:1.4;
+  }
+
   /* ---------- Review ritual ---------- */
   .ritual-list{display:flex;flex-direction:column;gap:14px;}
   .ritual-step{
@@ -559,27 +575,75 @@ const HABITS = [
 const ROTATION = [
   {day:'Day A', exercises:[
     {name:'Goblet squat (hold 1 dumbbell at chest)', meta:'3 x 10–12', note:'Slow on the way down',
+      cue:'Hips push back and down, chest stays tall — the dumbbell barely moves.',
       start:{head:[80,28],shoulder:[80,54],elbow:[65,78],hand:[80,86],hip:[80,100],knee:[80,138],ankle:[80,168],toe:[100,168]},
-      move:{head:[78,72],shoulder:[78,96],elbow:[63,116],hand:[78,124],hip:[85,132],knee:[97,150],ankle:[80,168],toe:[100,168]}
+      move:{head:[78,72],shoulder:[78,96],elbow:[63,116],hand:[78,124],hip:[85,132],knee:[97,150],ankle:[80,168],toe:[100,168]},
+      highlight:['legUpper','legLower'],
+      arrow:{from:[80,100], to:[85,132]}
     },
     {name:'Bent-over row', meta:'3 x 10–12', note:'Flat back, squeeze shoulder blades',
+      cue:'Torso stays fixed and hinged — only the arm drives the dumbbell up to the ribs.',
       start:{head:[38,58],shoulder:[54,64],elbow:[50,94],hand:[47,120],hip:[96,80],knee:[100,130],ankle:[100,168],toe:[120,168]},
-      move:{head:[38,58],shoulder:[54,64],elbow:[74,80],hand:[85,74],hip:[96,80],knee:[100,130],ankle:[100,168],toe:[120,168]}
+      move:{head:[38,58],shoulder:[54,64],elbow:[74,80],hand:[85,74],hip:[96,80],knee:[100,130],ankle:[100,168],toe:[120,168]},
+      highlight:['armUpper','armLower'],
+      arrow:{from:[47,120], to:[85,74]}
     },
     {name:'Standing shoulder press', meta:'3 x 8–10', note:'Stop if it strains your neck',
+      cue:'Legs and torso stay still — the dumbbell travels straight up overhead.',
       start:{head:[80,28],shoulder:[80,54],elbow:[99,64],hand:[99,42],hip:[80,100],knee:[80,138],ankle:[80,168],toe:[100,168]},
-      move:{head:[78,28],shoulder:[78,54],elbow:[100,30],hand:[102,8],hip:[78,100],knee:[78,138],ankle:[78,168],toe:[98,168]}
+      move:{head:[78,28],shoulder:[78,54],elbow:[100,30],hand:[102,8],hip:[78,100],knee:[78,138],ankle:[78,168],toe:[98,168]},
+      highlight:['armUpper','armLower'],
+      arrow:{from:[99,42], to:[102,8]}
     }
   ]},
   {day:'Day B', exercises:[
-    {name:'Romanian deadlift (light hinge)', meta:'3 x 10–12', note:'Soft knees, hinge at hips'},
-    {name:'Bicep curl', meta:'3 x 10–12', note:'Control the lowering phase'},
-    {name:'Overhead tricep extension', meta:'3 x 10–12', note:'Keep elbows close to head'}
+    {name:'Romanian deadlift (light hinge)', meta:'3 x 10–12', note:'Soft knees, hinge at hips',
+      cue:'Knees stay soft — the hips fold back while the dumbbell stays close to the legs.',
+      start:{head:[80,28],shoulder:[80,54],elbow:[78,80],hand:[76,104],hip:[80,100],knee:[80,138],ankle:[80,168],toe:[100,168]},
+      move:{head:[48,66],shoulder:[60,80],elbow:[50,110],hand:[45,135],hip:[95,90],knee:[90,132],ankle:[80,168],toe:[100,168]},
+      highlight:['torso','legUpper'],
+      arrow:{from:[80,100], to:[95,90]}
+    },
+    {name:'Bicep curl', meta:'3 x 10–12', note:'Control the lowering phase',
+      cue:'Upper arm stays pinned to your side — only the forearm curls up.',
+      start:{head:[80,28],shoulder:[80,54],elbow:[84,80],hand:[86,106],hip:[80,100],knee:[80,138],ankle:[80,168],toe:[100,168]},
+      move:{head:[80,28],shoulder:[80,54],elbow:[84,80],hand:[70,60],hip:[80,100],knee:[80,138],ankle:[80,168],toe:[100,168]},
+      highlight:['armLower'],
+      arrow:{from:[86,106], to:[70,60]}
+    },
+    {name:'Overhead tricep extension', meta:'3 x 10–12', note:'Keep elbows close to head',
+      cue:'Elbow points at the ceiling and barely moves — only the forearm extends.',
+      start:{head:[80,28],shoulder:[80,54],elbow:[92,26],hand:[66,44],hip:[80,100],knee:[80,138],ankle:[80,168],toe:[100,168]},
+      move:{head:[80,28],shoulder:[80,54],elbow:[96,20],hand:[100,4],hip:[80,100],knee:[80,138],ankle:[80,168],toe:[100,168]},
+      highlight:['armLower'],
+      arrow:{from:[66,44], to:[100,4]}
+    }
   ]},
   {day:'Day C', exercises:[
-    {name:'Reverse lunge (alternating legs)', meta:'3 x 8–10 each leg', note:'Hold dumbbells at sides'},
-    {name:'Lateral raise', meta:'3 x 10–12', note:'Light and slow, no swinging'},
-    {name:'Plank (bodyweight)', meta:'3 x 20–30 sec', note:'Optional 4th session filler'}
+    {name:'Reverse lunge (alternating legs)', meta:'3 x 8–10 each leg', note:'Hold dumbbells at sides',
+      cue:'One leg steps straight back and lowers — front knee tracks over the toes.',
+      start:{head:[80,28],shoulder:[80,54],elbow:[78,80],hand:[76,104],hip:[80,100],knee:[80,138],ankle:[80,168],toe:[100,168]},
+      move:{head:[78,80],shoulder:[78,104],elbow:[72,120],hand:[70,140],hip:[80,108],knee:[80,140],ankle:[80,168],toe:[100,168],
+        backKnee:[55,150],backAnkle:[45,172],backToe:[30,172]},
+      highlight:['legUpper','legLower'],
+      arrow:{from:[100,168], to:[30,172]},
+      noDumbbell:true
+    },
+    {name:'Lateral raise', meta:'3 x 10–12', note:'Light and slow, no swinging',
+      cue:'Elbows lead the movement out to shoulder height, then lower with control.',
+      start:{head:[80,28],shoulder:[80,54],elbow:[78,80],hand:[76,104],hip:[80,100],knee:[80,138],ankle:[80,168],toe:[100,168]},
+      move:{head:[80,28],shoulder:[80,54],elbow:[105,50],hand:[128,48],hip:[80,100],knee:[80,138],ankle:[80,168],toe:[100,168]},
+      highlight:['armUpper','armLower'],
+      arrow:{from:[76,104], to:[128,48]}
+    },
+    {name:'Plank (bodyweight)', meta:'3 x 20–30 sec', note:'Optional 4th session filler',
+      cue:'Head, hips, and heels stay in one straight line — no sagging or piking.',
+      startLabel:'Setup', moveLabel:'Hold',
+      start:{head:[36,86],shoulder:[58,84],elbow:[50,108],hand:[68,110],hip:[95,84],knee:[128,116],ankle:[146,124],toe:[150,128]},
+      move:{head:[34,92],shoulder:[58,88],elbow:[50,110],hand:[70,112],hip:[95,88],knee:[124,88],ankle:[148,88],toe:[152,98]},
+      guideline:{from:[34,92], to:[148,88]},
+      noDumbbell:true
+    }
   ]}
 ];
 
@@ -924,29 +988,72 @@ function renderTrackerMobile(){
   });
 }
 
-function poseSvg(pose){
+function poseSvg(pose, opts={}){
   if(!pose) return '';
-  const {head, shoulder, elbow, hand, hip, knee, ankle, toe} = pose;
-  const line = (a,b,cls) => `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" class="${cls}"/>`;
+  const {head, shoulder, elbow, hand, hip, knee, ankle, toe, backKnee, backAnkle, backToe} = pose;
+  const hl = opts.highlight || [];
+  const cls = (key, base) => hl.includes(key) ? `${base} pose-hl` : base;
+  const line = (a,b,c) => `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" class="${c}"/>`;
   const joint = (p, r) => `<circle cx="${p[0]}" cy="${p[1]}" r="${r}" class="pose-joint"/>`;
+
+  let backLegSvg = '';
+  if(backKnee && backAnkle){
+    backLegSvg = `
+      ${line(hip, backKnee, 'pose-back-leg')}
+      ${line(backKnee, backAnkle, 'pose-back-leg')}
+      ${backToe ? line(backAnkle, backToe, 'pose-back-leg-foot') : ''}
+    `;
+  }
+
+  let guidelineSvg = '';
+  if(opts.guideline){
+    const {from, to} = opts.guideline;
+    guidelineSvg = `<line x1="${from[0]}" y1="${from[1]}" x2="${to[0]}" y2="${to[1]}" class="pose-guideline"/>`;
+  }
+
+  let arrowSvg = '';
+  if(opts.arrow){
+    const {from, to} = opts.arrow;
+    const mx = (from[0]+to[0])/2, my = (from[1]+to[1])/2;
+    const dx = to[0]-from[0], dy = to[1]-from[1];
+    const len = Math.sqrt(dx*dx+dy*dy) || 1;
+    const nx = -dy/len, ny = dx/len;
+    const curveOffset = 16;
+    const cx = mx + nx*curveOffset, cy = my + ny*curveOffset;
+    const angle = Math.atan2(to[1]-cy, to[0]-cx) * 180/Math.PI;
+    arrowSvg = `
+      <path d="M ${from[0]} ${from[1]} Q ${cx} ${cy} ${to[0]} ${to[1]}" class="pose-motion-arrow"/>
+      <g transform="translate(${to[0]},${to[1]}) rotate(${angle})">
+        <polygon points="0,0 -9,-4.5 -9,4.5" class="pose-motion-arrowhead"/>
+      </g>
+    `;
+  }
+
+  const dumbbellSvg = opts.noDumbbell ? '' : `
+    <g class="pose-dumbbell" transform="translate(${hand[0]},${hand[1]})">
+      <line x1="-9" y1="0" x2="9" y2="0" class="pose-dumbbell-bar"/>
+      <circle cx="-9" cy="0" r="5" class="pose-dumbbell-disc"/>
+      <circle cx="9" cy="0" r="5" class="pose-dumbbell-disc"/>
+    </g>
+  `;
+
   return `
     <svg viewBox="0 0 160 176" class="pose-svg" xmlns="http://www.w3.org/2000/svg">
-      ${line(shoulder, hip, 'pose-torso')}
-      ${line(hip, knee, 'pose-leg-upper')}
-      ${line(knee, ankle, 'pose-leg-lower')}
-      ${line(ankle, toe, 'pose-foot')}
-      ${line(shoulder, elbow, 'pose-arm-upper')}
-      ${line(elbow, hand, 'pose-arm-lower')}
+      ${guidelineSvg}
+      ${backLegSvg}
+      ${line(shoulder, hip, cls('torso','pose-torso'))}
+      ${line(hip, knee, cls('legUpper','pose-leg-upper'))}
+      ${line(knee, ankle, cls('legLower','pose-leg-lower'))}
+      ${line(ankle, toe, cls('foot','pose-foot'))}
+      ${line(shoulder, elbow, cls('armUpper','pose-arm-upper'))}
+      ${line(elbow, hand, cls('armLower','pose-arm-lower'))}
       ${joint(shoulder, 8)}
       ${joint(hip, 8)}
       ${joint(knee, 6)}
       ${joint(elbow, 5)}
       <circle cx="${head[0]}" cy="${head[1]}" r="13" class="pose-head"/>
-      <g class="pose-dumbbell" transform="translate(${hand[0]},${hand[1]})">
-        <line x1="-9" y1="0" x2="9" y2="0" class="pose-dumbbell-bar"/>
-        <circle cx="-9" cy="0" r="5" class="pose-dumbbell-disc"/>
-        <circle cx="9" cy="0" r="5" class="pose-dumbbell-disc"/>
-      </g>
+      ${dumbbellSvg}
+      ${arrowSvg}
     </svg>
   `;
 }
@@ -965,14 +1072,15 @@ function renderRotation(){
           ${e.start ? `
             <div class="pose-pair">
               <div class="pose-panel">
-                ${poseSvg(e.start)}
-                <div class="pose-caption">Start</div>
+                ${poseSvg(e.start, {noDumbbell: e.noDumbbell})}
+                <div class="pose-caption">${e.startLabel || 'Start'}</div>
               </div>
               <div class="pose-panel">
-                ${poseSvg(e.move)}
-                <div class="pose-caption">Movement</div>
+                ${poseSvg(e.move, {highlight: e.highlight, arrow: e.arrow, guideline: e.guideline, noDumbbell: e.noDumbbell})}
+                <div class="pose-caption">${e.moveLabel || 'Movement'}</div>
               </div>
             </div>
+            ${e.cue ? `<div class="pose-cue">${e.cue}</div>` : ''}
           ` : ''}
         </div>
       `).join('')}
