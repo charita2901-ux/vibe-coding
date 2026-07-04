@@ -314,9 +314,103 @@
   }
   .save-note{color:var(--sage);}
 
+  /* ---------- Day picker (mobile) ---------- */
+  .day-picker{
+    display:none;
+    gap:8px;
+    overflow-x:auto;
+    padding:4px 2px 10px;
+    margin-bottom:16px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .day-picker::-webkit-scrollbar{display:none;}
+  .day-pill{
+    flex:0 0 auto;
+    width:50px;
+    display:flex;flex-direction:column;align-items:center;gap:5px;
+    padding:10px 0;
+    border-radius:14px;
+    background:var(--card);
+    box-shadow:var(--shadow);
+    cursor:pointer;
+    border:2px solid transparent;
+    transition:all .15s ease;
+  }
+  .day-pill .dname{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
+  .day-pill .dnum{font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--ink);}
+  .day-pill.is-today{border-color:var(--amber-tint);}
+  .day-pill.is-selected{background:var(--sage-deep);}
+  .day-pill.is-selected .dname{color:rgba(255,255,255,0.65);}
+  .day-pill.is-selected .dnum{color:#fff;}
+
+  /* ---------- Mobile habit cards (one day at a time) ---------- */
+  .tracker-mobile{display:none;flex-direction:column;gap:14px;}
+  .habit-card-mobile{
+    background:var(--card);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:18px;
+  }
+  .habit-card-mobile .hc-top{
+    display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+    margin-bottom:16px;
+  }
+  .habit-card-mobile .habit-name{font-weight:600;font-size:15px;color:var(--ink);}
+  .habit-card-mobile .habit-why{font-size:12px;color:var(--ink-soft);margin-top:4px;line-height:1.4;}
+  .hc-meta{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+  .hc-meta .target-cell{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-soft);white-space:nowrap;}
+
+  .hc-control{margin-bottom:14px;}
+  .toggle-btn{
+    width:100%;
+    padding:14px;
+    border-radius:12px;
+    border:1.5px solid var(--line);
+    background:var(--paper);
+    font-family:'Inter',sans-serif;font-weight:600;font-size:14px;color:var(--ink-soft);
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:all .15s ease;
+  }
+  .toggle-btn.on{background:var(--amber);border-color:var(--amber);color:#fff;}
+
+  .rating-row{display:flex;gap:8px;}
+  .rating-btn{
+    flex:1;aspect-ratio:1;
+    border-radius:12px;
+    border:1.5px solid var(--line);
+    background:var(--paper);
+    font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:15px;color:var(--ink-soft);
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:all .15s ease;
+  }
+  .rating-btn.active{background:var(--amber);border-color:var(--amber);color:#fff;}
+
+  .week-glance{display:flex;gap:5px;align-items:center;}
+  .glance-dot{
+    flex:1;height:8px;border-radius:4px;background:var(--line);
+    position:relative;cursor:pointer;
+  }
+  .glance-dot.filled,.glance-dot.r5{background:var(--amber);}
+  .glance-dot.r1{background:#F1E4D0;}
+  .glance-dot.r2{background:#EAD9B4;}
+  .glance-dot.r3{background:var(--amber-tint);}
+  .glance-dot.r4{background:#E3B06B;}
+  .glance-dot.is-selected::after{
+    content:'';position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
+    width:4px;height:4px;border-radius:50%;background:var(--ink);
+  }
+  .hc-footer{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-top:14px;padding-top:12px;border-top:1px solid var(--line);
+  }
+
   @media (max-width:640px){
     h1{font-size:26px;}
-    .dot{width:22px;height:22px;font-size:10px;}
+    .tracker-card{display:none;}
+    .day-picker{display:flex;}
+    .tracker-mobile{display:flex;}
   }
 </style>
 </head>
@@ -356,6 +450,8 @@
         <tbody id="trackerBody"></tbody>
       </table>
     </div>
+    <div class="day-picker" id="dayPicker"></div>
+    <div class="tracker-mobile" id="trackerMobile"></div>
 
     <div class="reflection">
       <h2>Weekly Reflection</h2>
@@ -446,6 +542,18 @@ function fmtRange(monday){
 }
 
 let currentMonday = getMonday(new Date());
+let selectedDay = 0;
+
+function syncSelectedDayToToday(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  let idx = 0;
+  for(let i=0;i<7;i++){
+    const d = new Date(currentMonday); d.setDate(currentMonday.getDate()+i);
+    if(d.getTime() === today.getTime()){ idx = i; break; }
+  }
+  selectedDay = idx;
+}
+syncSelectedDayToToday();
 
 function weekData(){
   const key = isoDate(currentMonday);
@@ -524,6 +632,57 @@ function renderStreakStrip(){
   `;
 }
 
+function habitSummary(h, vals){
+  let total, statusHtml;
+  if(h.type === 'check'){
+    total = vals.filter(v => v === 'on').length;
+    const pct = total >= h.target;
+    statusHtml = total === 0
+      ? '<span class="status-pill none">No data</span>'
+      : pct ? '<span class="status-pill on">On track</span>' : '<span class="status-pill watch">Keep going</span>';
+  } else {
+    const filled = vals.filter(v => v !== null);
+    const avg = filled.length ? (filled.reduce((a,b)=>a+b,0)/filled.length) : null;
+    total = avg !== null ? avg.toFixed(1) : '–';
+    statusHtml = avg === null
+      ? '<span class="status-pill none">No data</span>'
+      : avg >= 3 ? '<span class="status-pill on">On track</span>' : '<span class="status-pill watch">Watch this</span>';
+  }
+  return {total, statusHtml};
+}
+
+function toggleHabit(habitId, day, type){
+  const d = weekData();
+  if(type === 'check'){
+    d.habits[habitId][day] = d.habits[habitId][day] === 'on' ? null : 'on';
+  } else {
+    const cur = d.habits[habitId][day] || 0;
+    d.habits[habitId][day] = cur >= 5 ? null : cur + 1;
+  }
+  save();
+  renderTracker();
+  renderTrackerMobile();
+  renderStreakStrip();
+}
+
+function setCheckHabit(habitId, day){
+  const d = weekData();
+  d.habits[habitId][day] = d.habits[habitId][day] === 'on' ? null : 'on';
+  save();
+  renderTracker();
+  renderTrackerMobile();
+  renderStreakStrip();
+}
+
+function setRatingHabit(habitId, day, value){
+  const d = weekData();
+  d.habits[habitId][day] = d.habits[habitId][day] === value ? null : value;
+  save();
+  renderTracker();
+  renderTrackerMobile();
+  renderStreakStrip();
+}
+
 function renderTracker(){
   const data = weekData();
   const body = document.getElementById('trackerBody');
@@ -531,22 +690,7 @@ function renderTracker(){
   HABITS.forEach(h => {
     const row = document.createElement('tr');
     const vals = data.habits[h.id];
-
-    let total, statusHtml;
-    if(h.type === 'check'){
-      total = vals.filter(v => v === 'on').length;
-      const pct = total >= h.target;
-      statusHtml = total === 0
-        ? '<span class="status-pill none">No data</span>'
-        : pct ? '<span class="status-pill on">On track</span>' : '<span class="status-pill watch">Keep going</span>';
-    } else {
-      const filled = vals.filter(v => v !== null);
-      const avg = filled.length ? (filled.reduce((a,b)=>a+b,0)/filled.length) : null;
-      total = avg !== null ? avg.toFixed(1) : '–';
-      statusHtml = avg === null
-        ? '<span class="status-pill none">No data</span>'
-        : avg >= 3 ? '<span class="status-pill on">On track</span>' : '<span class="status-pill watch">Watch this</span>';
-    }
+    const {total, statusHtml} = habitSummary(h, vals);
 
     const dayCells = vals.map((v, i) => {
       if(h.type === 'check'){
@@ -572,19 +716,7 @@ function renderTracker(){
 
   body.querySelectorAll('.dot').forEach(dot => {
     dot.addEventListener('click', () => {
-      const habitId = dot.dataset.habit;
-      const day = +dot.dataset.day;
-      const type = dot.dataset.type;
-      const d = weekData();
-      if(type === 'check'){
-        d.habits[habitId][day] = d.habits[habitId][day] === 'on' ? null : 'on';
-      } else {
-        const cur = d.habits[habitId][day] || 0;
-        d.habits[habitId][day] = cur >= 5 ? null : cur + 1;
-      }
-      save();
-      renderTracker();
-      renderStreakStrip();
+      toggleHabit(dot.dataset.habit, +dot.dataset.day, dot.dataset.type);
     });
   });
 
@@ -592,6 +724,94 @@ function renderTracker(){
   const refl = data.reflection;
   document.querySelectorAll('.q-block textarea').forEach(ta => {
     ta.value = refl[ta.dataset.q] || '';
+  });
+}
+
+function renderDayPicker(){
+  const wrap = document.getElementById('dayPicker');
+  wrap.innerHTML = '';
+  const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const today = new Date(); today.setHours(0,0,0,0);
+  for(let i=0;i<7;i++){
+    const d = new Date(currentMonday); d.setDate(currentMonday.getDate()+i);
+    const isToday = d.getTime() === today.getTime();
+    const pill = document.createElement('div');
+    pill.className = `day-pill ${isToday?'is-today':''} ${i===selectedDay?'is-selected':''}`;
+    pill.innerHTML = `<span class="dname">${dayNames[i]}</span><span class="dnum">${d.getDate()}</span>`;
+    pill.addEventListener('click', () => {
+      selectedDay = i;
+      renderDayPicker();
+      renderTrackerMobile();
+    });
+    wrap.appendChild(pill);
+  }
+}
+
+function renderTrackerMobile(){
+  const data = weekData();
+  const wrap = document.getElementById('trackerMobile');
+  wrap.innerHTML = '';
+
+  HABITS.forEach(h => {
+    const vals = data.habits[h.id];
+    const {total, statusHtml} = habitSummary(h, vals);
+    const curVal = vals[selectedDay];
+
+    let controlHtml;
+    if(h.type === 'check'){
+      const isOn = curVal === 'on';
+      controlHtml = `
+        <button class="toggle-btn ${isOn?'on':''}" data-habit="${h.id}" data-action="check">
+          ${isOn ? '✓ Done today' : 'Mark done'}
+        </button>`;
+    } else {
+      controlHtml = `
+        <div class="rating-row">
+          ${[1,2,3,4,5].map(n => `<button class="rating-btn ${curVal===n?'active':''}" data-habit="${h.id}" data-action="rating" data-value="${n}">${n}</button>`).join('')}
+        </div>`;
+    }
+
+    const glanceHtml = vals.map((v, i) => {
+      const cls = h.type === 'check'
+        ? (v === 'on' ? 'filled' : '')
+        : (v ? `r${v}` : '');
+      return `<div class="glance-dot ${cls} ${i===selectedDay?'is-selected':''}" data-habit="${h.id}" data-jump-day="${i}"></div>`;
+    }).join('');
+
+    const card = document.createElement('div');
+    card.className = 'habit-card-mobile';
+    card.innerHTML = `
+      <div class="hc-top">
+        <div>
+          <div class="habit-name">${h.name}</div>
+          <div class="habit-why">${h.why}</div>
+        </div>
+        <div class="hc-meta">
+          <span class="target-cell">${h.target}x/week</span>
+        </div>
+      </div>
+      <div class="hc-control">${controlHtml}</div>
+      <div class="week-glance">${glanceHtml}</div>
+      <div class="hc-footer">
+        <span class="total-cell">${total}</span>
+        ${statusHtml}
+      </div>
+    `;
+    wrap.appendChild(card);
+  });
+
+  wrap.querySelectorAll('[data-action="check"]').forEach(btn => {
+    btn.addEventListener('click', () => setCheckHabit(btn.dataset.habit, selectedDay));
+  });
+  wrap.querySelectorAll('[data-action="rating"]').forEach(btn => {
+    btn.addEventListener('click', () => setRatingHabit(btn.dataset.habit, selectedDay, +btn.dataset.value));
+  });
+  wrap.querySelectorAll('.glance-dot').forEach(dot => {
+    dot.addEventListener('click', () => {
+      selectedDay = +dot.dataset.jumpDay;
+      renderDayPicker();
+      renderTrackerMobile();
+    });
   });
 }
 
@@ -635,16 +855,20 @@ document.querySelectorAll('.q-block textarea').forEach(ta => {
 
 document.getElementById('prevWeek').addEventListener('click', () => {
   currentMonday.setDate(currentMonday.getDate() - 7);
+  syncSelectedDayToToday();
   updateWeek();
 });
 document.getElementById('nextWeek').addEventListener('click', () => {
   currentMonday.setDate(currentMonday.getDate() + 7);
+  syncSelectedDayToToday();
   updateWeek();
 });
 function updateWeek(){
   document.getElementById('weekRange').textContent = fmtRange(currentMonday);
   renderHeader();
   renderTracker();
+  renderDayPicker();
+  renderTrackerMobile();
   renderStreakStrip();
 }
 
